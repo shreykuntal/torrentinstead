@@ -2,6 +2,18 @@
 #include "bencode.h"
 #include <string>
 #include <iostream>
+#include <cctype>
+#include <sstream>
+#include <iomanip>
+
+std::string bytes_to_hex(std::string &bc){
+    std::string actual {bc.substr(1, bc.size()-1)};
+    std::stringstream ss{};
+    for (char &bt : actual){
+        ss << std::hex << std::setfill('0') << std::setw(2) << (int)bt;
+    }
+    return R"(")" + ss.str() + R"(")";
+}
 
 std::string parse_string(std::string &bc, int &s){
     int sz{0};
@@ -17,7 +29,7 @@ std::string parse_string(std::string &bc, int &s){
         s++;
     }
     if (sz > 0){
-        std::cerr << "malformed string in element parsing\n";
+        std::cerr << "malformed string in element parsing " << sz << " " << s << '\n';
     }
     return elm;
 }
@@ -40,9 +52,15 @@ std::string parse_bencode(std::string &bc, int &s){
         res += "{";
         s++;
         while (bc[s] != 'e'){
-            res += parse_bencode(bc, s);
+            std::string key {parse_bencode(bc, s)};
+            res += key;
             res += ": ";
-            res += parse_bencode(bc, s);
+            std::string val {parse_bencode(bc, s)};
+            if (key == R"("pieces")"){
+                res += bytes_to_hex(val);
+            }else{
+                res += val;
+            }
             if (bc[s] != 'e'){
                 res += ',';
             }
@@ -64,12 +82,14 @@ std::string parse_bencode(std::string &bc, int &s){
         s++;
         res += parse_int(bc, s);
         s++;
-    }else if (bc[s] >= '0' && bc[s] <= '9'){
+    }else if (std::isdigit(bc[s])){
         res += R"(")";
         res += parse_string(bc, s);
         res += R"(")";
     }else{
-        std::cerr << "malformed string in element parsing\n";
+        std::cerr << "malformed string in element parsing " << s << '\n';
+        std::cerr << res << '\n';
+        std::exit(1);
     }
     return res;
 }

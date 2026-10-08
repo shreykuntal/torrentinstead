@@ -1,11 +1,23 @@
-#include "bencode.h"
-#include "json.hpp"
 #include <iostream>
+#include <fstream>
+#include "headers/bencode.h"
+#include "json.hpp"
 #include <string>
+#include <iomanip>
 
 int main(){
-    //test bencode parsing
-    std::string s{"d8:announce26:http://tracker.example.com4:infod4:name8:test.txt6:lengthi1234e5:piece20:12345678901234567890ee"};
-    int i{0};
-    std::cout << parse_bencode(s, i) << "\n";
+    std::fstream inf{"ex.torrent"};
+    if (!inf){
+        std::cerr << "Can't open\n";
+        return 1;
+    }
+    char b;
+    std::string s{};
+    while (inf.get(b)){
+        s += b;
+    }
+    int x {0};
+    nlohmann::json json {nlohmann::json::parse(parse_bencode(s, x))};
+    std::cout << std::setw(4) << json << '\n';
+    return 0;
 }

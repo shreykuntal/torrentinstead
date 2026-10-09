@@ -17,7 +17,10 @@ int main(){
         s += b;
     }
     int x {0};
-    nlohmann::json json {nlohmann::json::parse(parse_bencode(s, x))};
-    std::cout << std::setw(4) << json << '\n';
+    std::string out {parse_bencode(s, x)};
+
+    //use copy initialization instead of direct list to avoid parsing whole as list
+    nlohmann::json json = nlohmann::json::parse(out);
+    std::cout << json["announce"] << '\n';
     return 0;
 }
